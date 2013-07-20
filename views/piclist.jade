@@ -1,0 +1,10 @@
+extends layout
+
+block content
+  h1= title
+  p MMmmmmm... Excellent.
+
+  ul
+    each file in fileList
+      li
+        a(href=file)= file 
