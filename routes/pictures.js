@@ -13,6 +13,9 @@ exports.pictures = function(req, res){
         var newPath = "./public/" + fileName;
 
         fs.writeFile(newPath, data, function(error) {
+            res.redirect('/pics');
+
+            //If you want the separate thing, comment out above.
             res.render('picture', { 
                 title: 'YOU POSTED A PICTURE!',
                 file: fileName,
@@ -27,11 +30,9 @@ exports.pictures = function(req, res){
 
 
 exports.list = function(req, res) {
-        //console.log(req);
+        console.log(req.query);
 
         fs.readdir('./public/', function(err, files) {
-            console.log(files);
-            //if(files) console.log("made it to files");
             res.render('piclist', {
                 fileList: files,
                 title: "Here's the list!"
