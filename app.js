@@ -4,11 +4,16 @@
  */
 
 var express = require('express')
-  , routes = require('./routes')
-  , user = require('./routes/user')
-  , pics = require('./routes/pictures')
-  , http = require('http')
-  , path = require('path');
+, routes = require('./routes')
+, user = require('./routes/user')
+, pics = require('./routes/pictures.js')
+, http = require('http')
+, path = require('path')
+, mongodb = require('mongodb')
+, db = require('./database');
+//, data = require('./routes/data');
+
+//db.open(function() {console.log("Connected!")});
 
 var app = express();
 
@@ -25,14 +30,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // development only
 if ('development' == app.get('env')) {
-  app.use(express.errorHandler());
+    app.use(express.errorHandler());
 }
 
 app.get('/', routes.index);
 app.get('/users', user.list);
 app.get('/pics', pics.list);
 app.post('/pics', pics.pictures);
+app.get('/foo', function(req, res) {debugger; console.log(db)});
+//app.get('/data/:collectionName', data);
 
-http.createServer(app).listen(app.get('port'), function(){
-  console.log('Express server listening on port ' + app.get('port'));
+app.listen(app.get('port'), function(){
+    console.log('Express server listening on port ' + app.get('port'));
 });
+//Run app from database functionality.
+//db.run(app);
