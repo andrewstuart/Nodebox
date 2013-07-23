@@ -2,9 +2,10 @@ extends layout
 
 block content
   h1= title
-  p I guess if you wanted, you could post a picture.
+  p I guess if you wanted, you could post a file.
   form(action='/pics', method='post', enctype='multipart/form-data')
-    input(type='file', name='picture') Submit a pic
+    input(type='text', name='label') Label your file
+    input(type='file', name='file') Submit a file
     input(type='submit') Submit
 
   p Also, here's some files if you want to check them out.
