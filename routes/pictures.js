@@ -4,9 +4,7 @@
  */
 
 var fs = require('fs')
-, db = require('../database');
-
-debugger;
+, db = require('../database')
 
 exports.pictures = function(req, res) {
 
@@ -14,33 +12,36 @@ exports.pictures = function(req, res) {
 
     //Read the file from the request.
     fs.readFile(req.files.file.path, function(err, data) {
-        debugger;
-        var fileName = req.files.file.name;
-        var newPath = "./public/" + fileName;
+        //debugger;
 
-        req.body.fileName = fileName;
-        req.body.path = newPath;
+        //Add some data and track as variables.
+        var originalFileName = req.body.originalFileName = req.files.file.name;
+        var publicFolder = req.body.publicFolder = '/public';
+        var fileFolder = req.body.fileFolder = '/files';
 
+        //TODO: Refactor to use a data api.
         //Insert the data into the file collection.
         db.collection('files', function(err, coll) {
+            coll.insert(req.body, function(err, returnDocument) {
 
-            coll.insert(req.body, function(err, data) {
+                //TODO: Handle multiples!
+                var idString = returnDocument[0]._id.toString();
+
                 debugger;
+
+                //Now that we have the ObjectId, write the file to that path.
+                var filePath = '.' + publicFolder + fileFolder + '/' + idString;
+
+                fs.writeFile(filePath, data, function(error) {
+                    //Now that it's written, move to the list.
+                    exports.list(req, res);
+                    
+                    //Uses a round trip. 
+                    //res.redirect('/pics');
+                });
             });
         });
 
-        fs.writeFile(newPath, data, function(error) {
-
-
-            res.redirect('/pics');
-
-            //If you want the separate thing, comment out above.
-            res.render('picture', { 
-                title: 'YOU POSTED A PICTURE!',
-                file: fileName,
-                fileTitle: fileName
-            });
-        });
 
     });
 
@@ -54,16 +55,9 @@ exports.list = function(req, res) {
     db.collection('files', function(err, coll) {
         coll.find().toArray(function(err, data) {
             res.render('piclist', {
-                fileList: data.fileName,
+                fileList: data,
                 title: "Here's the list 2.0"
             });
-        });
-    });
-
-    fs.readdir('./public/', function(err, files) {
-        res.render('piclist', {
-            fileList: files,
-            title: "Here's the list!"
         });
     });
 }
