@@ -7,4 +7,4 @@ block content
   ul
     each file in fileList
       li
-        a(href=file)= file 
+        a(href=file.fileFolder + '/' + file._id.toString())= file.label
