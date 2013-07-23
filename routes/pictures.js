@@ -3,12 +3,20 @@
  * POST a picture.
  */
 
-var fs = require('fs');
-
+var fs = require('fs')
+, db = require('../database');
+debugger;
 exports.pictures = function(req, res){
-    //console.log(req.files);
+
+    db.collection('files', function(err, coll) {
+        coll.insert(req.files.picture, function(err, data) {
+            debugger;
+            console.log(data)
+        });
+    });
 
     fs.readFile(req.files.picture.path, function(err, data) {
+        debugger;
         var fileName = req.files.picture.name;
         var newPath = "./public/" + fileName;
 
