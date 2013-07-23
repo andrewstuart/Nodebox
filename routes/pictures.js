@@ -5,13 +5,15 @@
 
 var fs = require('fs')
 , db = require('../database');
+
 debugger;
+
 exports.pictures = function(req, res){
 
+    //TODO: Refactor to private module methods.
     db.collection('files', function(err, coll) {
         coll.insert(req.files.picture, function(err, data) {
             debugger;
-            console.log(data)
         });
     });
 
@@ -38,12 +40,12 @@ exports.pictures = function(req, res){
 
 
 exports.list = function(req, res) {
-        console.log(req.query);
+    console.log(req.query);
 
-        fs.readdir('./public/', function(err, files) {
-            res.render('piclist', {
-                fileList: files,
-                title: "Here's the list!"
-            });
+    fs.readdir('./public/', function(err, files) {
+        res.render('piclist', {
+            fileList: files,
+            title: "Here's the list!"
         });
-    }
+    });
+}
