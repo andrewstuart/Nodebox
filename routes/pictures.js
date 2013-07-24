@@ -5,18 +5,19 @@
 
 var fs = require('fs')
 , db = require('../database')
+, ID = require('mongodb').ObjectID;
 
-exports.pictures = function(req, res) {
+exports.receive = function(req, res) {
 
     //TODO: Refactor to private module methods.
 
-    //Read the file from the request.
+    //Read the file from a POST request.
     fs.readFile(req.files.file.path, function(err, data) {
         //debugger;
 
         //Add some data and track as variables.
         var originalFileName = req.body.originalFileName = req.files.file.name;
-        var publicFolder = req.body.publicFolder = '/public';
+        //var publicFolder = req.body.publicFolder = '/public';
         var fileFolder = req.body.fileFolder = '/files';
 
         //TODO: Refactor to use a data api.
@@ -30,10 +31,11 @@ exports.pictures = function(req, res) {
                 debugger;
 
                 //Now that we have the ObjectId, write the file to that path.
-                var filePath = '.' + publicFolder + fileFolder + '/' + idString;
+                //var filePath = '.' + fileFolder + '/' + idString;
+                var filePath = '.' + fileFolder + '/' + originalFileName;
 
                 fs.writeFile(filePath, data, function(error) {
-                    //Now that it's written, move to the list.
+                    //Now that it's written, respond with the list.
                     exports.list(req, res);
                     
                     //Uses a round trip. 
@@ -50,14 +52,25 @@ exports.pictures = function(req, res) {
 
 
 exports.list = function(req, res) {
-    console.log(req.query);
 
     db.collection('files', function(err, coll) {
-        coll.find().toArray(function(err, data) {
-            res.render('piclist', {
-                fileList: data,
-                title: "Here's the list 2.0"
+        if(req.params.requestedId) {
+            debugger;
+            coll.findOne({
+                _id: new ID(req.params.requestedId)
+            }, function(err, returnDocument) {
+                debugger;
+                if(err) console.log(err);
+
+                res.download('.' + returnDocument.fileFolder + '/' + returnDocument.originalFileName);
             });
-        });
+        } else {
+            coll.find().toArray(function(err, data) {
+                res.render('piclist', {
+                    fileList: data,
+                    title: "Here's the list 2.0"
+                });
+            });
+        }
     });
 }
