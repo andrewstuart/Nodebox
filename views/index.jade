@@ -3,10 +3,13 @@ extends layout
 block content
   h1= title
   p I guess if you wanted, you could post a file.
-  form(action='/pics', method='post', enctype='multipart/form-data')
-    input(type='text', name='label', placeholder='Label your file')
-    input(type='file', name='file') Submit a file
+  form(action='/files', method='post', enctype='multipart/form-data')
+    each field in formFields
+      br
+      label.fieldLabel(for=field.name)= field.label
+      input(id=field.name, type=field.type, name=field.name, placeholder=field.placeholder)
+    br
     input(type='submit') Submit
 
   p Also, here's some files if you want to check them out.
-  a(href='/pics') The List
+  a(href='/files') The List
