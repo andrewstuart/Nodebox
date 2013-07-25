@@ -3,16 +3,16 @@ var mongodb = require('mongodb')
 , Db = new mongodb.Db('filesite', server, {w: -1});
 
 Db.open(function(err) {
-    if (err) throw err;
+  if (err) throw err;
 
-    console.log("Connected to database!");
+  console.log("Connected to database!");
 });
 
 module.exports = Db;
 
 module.exports.getMyData = function(collectionName, searchObject, callback) {
   if(!collectionName) throw "Please at least pass a collection name."
-  searchObject = searchObject || {};
+    searchObject = searchObject || {};
 
   callback = typeof callback == 'function' ? callback : function() { return true };
 
