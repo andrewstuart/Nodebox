@@ -35,7 +35,7 @@ var parseFileRequest = function(req) {
     debugger;
 
     var f = {file: req.files[fileName]};
-    f.folder = dbObject.fileFolder = defaultFolder + '/' + areaNum + '/' + datepartString;
+    f.folder = dbObject.fileFolder = defaultFolder + '/' + areaNum + '/' + jobNum + '/' + datepartString;
     f.suffix = f.file.name.split('.').pop();
     f.name = submittedAt.toJSON().replace(/:|\./g, '-') + jobNum + '.' + f.suffix;
     f.path = dbObject.filePath = f.folder + '/' + f.name;
