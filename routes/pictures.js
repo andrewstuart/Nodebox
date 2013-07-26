@@ -17,22 +17,17 @@ var pad = function(n, width, z) {
   return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
-var moveFile = function(readPath, writePath) {
-  fs.createReadStream(readPath).pipe(fs.createWriteStream(writePath));
-};
+var intTest = /^\d+$/g;
 
-var receive = function(req, res) {
-  //Place to store data temporarily.
-  for (fileName in req.files) {
-
+var parseFileRequest = function(req) {
     //Get references to some variables.
     var dbObject = _.extend({}, req.body);
     var receivedTime = dbObject.receivedTime = new Date();
 
-    var jobNum = dbObject.jobPhaseNumber || '99';
-    var areaNum = dbObject.areaNum = jobNum.substring(0,2);
+    var jobNum = dbObject.jobPhaseNumber || 'None';
+    var areaNum = dbObject.areaNum = intTest.test(jobNum) ? jobNum.substring(0,2) : 'None';
 
-    var submittedAt = new Date(dbObject.submittedAt);
+    var submittedAt = new Date(dbObject.submittedAt || '');
     
     //Get date folder from the submittedTime
     var datepartString = submittedAt.getFullYear() + pad(submittedAt.getMonth(), 2);
@@ -40,11 +35,29 @@ var receive = function(req, res) {
     debugger;
 
     var f = {file: req.files[fileName]};
-      f.folder = dbObject.fileFolder = defaultFolder + '/' + areaNum + '/' + datepartString,
-      f.suffix = f.file.name.split('.').pop(),
-      f.name = submittedAt.toJSON().replace(/:|\./g, '-') + jobNum + '.' + f.suffix,
-      f.path = dbObject.filePath = f.folder + '/' + f.name
-    
+    f.folder = dbObject.fileFolder = defaultFolder + '/' + areaNum + '/' + datepartString;
+    f.suffix = f.file.name.split('.').pop();
+    f.name = submittedAt.toJSON().replace(/:|\./g, '-') + jobNum + '.' + f.suffix;
+    f.path = dbObject.filePath = f.folder + '/' + f.name;
+
+    return {
+      dbObject: dbObject,
+      f: f
+    }
+}
+
+var moveFile = function(readPath, writePath) {
+  fs.createReadStream(readPath).pipe(fs.createWriteStream(writePath));
+};
+
+var receivePost = function(req, res) {
+  //Place to store data temporarily.
+  for (fileName in req.files) {
+
+    var reqDetails = parseFileRequest(req);
+
+    var f = reqDetails.f;
+    var dbObject = reqDetails.dbObject;
 
     debugger;
 
@@ -69,7 +82,7 @@ var receive = function(req, res) {
   }
 }
 
-exports.receive = receive;
+exports.receive = receivePost;
 
 exports.list = function(req, res) {
 

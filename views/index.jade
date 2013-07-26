@@ -7,7 +7,7 @@ block content
     each field in formFields
       br
       label.fieldLabel(for=field.name)= field.label
-      input(id=field.name, type=field.type, name=field.name, placeholder=field.placeholder)
+      input(id=field.name, type=field.type, name=field.name, placeholder=field.placeholder, value=field.value)
     br
     input(type='hidden', name="exif", id="exif")
     input(type='submit') Submit

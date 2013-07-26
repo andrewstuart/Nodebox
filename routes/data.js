@@ -7,6 +7,8 @@ var db = require('../database')
 
 exports.show = function(req, res) {
 
+  debugger;
+
   //Reference to my collectionName
   var collName = req.params.collectionName;
   var objectId = req.params.objectId;
@@ -15,7 +17,7 @@ exports.show = function(req, res) {
   if(collName) {
 
     //Generate search object.
-    var searchObject = {};
+    var searchObject = req.query;
     if(objectId) searchObject._id = ID(objectId);
 
     debugger;
@@ -30,4 +32,27 @@ exports.show = function(req, res) {
       res.json(dataArray);
     })
   }
+}
+
+exports.post = function(req, res) {
+  var collectionName = req.params.collectionName;
+  var objectId = req.params.objectId;
+  var dbObject = req.body;
+
+  //Generate search object.
+  var searchObject = req.query;
+  searchObject._id = objectId ? ID(objectId) : ID();
+
+  debugger;
+
+  db.collection(collectionName, function(err, coll) {
+    if(err) throw err;
+    debugger;
+    coll.update(searchObject, {$set: dbObject}, {upsert: true}, function(err, returnDocuments) {
+      if(err) throw err;
+      debugger;
+      res.json(returnDocuments);
+    })
+  });
+  debugger;
 }
