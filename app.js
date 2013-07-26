@@ -12,6 +12,8 @@ var express = require('express')
 , db = require('./database')
 , data = require('./routes/data');
 
+//db.open(function() {console.log("Connected!")});
+
 var app = express();
 
 // all environments
@@ -35,8 +37,9 @@ app.get('/users', user.list);
 app.get('/files/:requestedId?', files.list);
 app.post('/files', files.receive);
 app.get('/foo', function(req, res) {debugger; console.log(db)});
-app.get('/data/:collectionName?/:objectId?', data.show);
-app.post('/data/:collectionName/:objectId?', data.post);
+app.all('/data/:collectionName?/:objectId?', data.show);
+//app.get('/data/:collectionName?/:objectId?', data.show);
+
 
 app.listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
