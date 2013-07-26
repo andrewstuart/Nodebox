@@ -1,5 +1,7 @@
 extends layout
 
+_id = file._id.toString();
+
 block content
   h1= title
   p MMmmmmm... Excellent.
@@ -7,4 +9,5 @@ block content
   ul
     each file in fileList
       li
-        a(href=file.fileFolder + '/' + file._id.toString())= file.label
+        label(for=_id)= file.label + ": "
+        a(id=file._id.toString(), href='/files/' + file._id.toString())= file.filePath.split('/').pop()

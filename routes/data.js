@@ -2,7 +2,7 @@
  * GET Data.
  */
 
-var show = require('../database').getMyData
+var db = require('../database')
 , ID = require('mongodb').ObjectID;
 
 exports.show = function(req, res) {
@@ -20,8 +20,14 @@ exports.show = function(req, res) {
 
     debugger;
 
-    show(collName, searchObject, function(data) {
+    db.getMyData(collName, searchObject, function(data) {
       res.json(data);
+    });
+  }
+  else {
+    debugger;
+    db.collectionNames( function(err, dataArray) {
+      res.json(dataArray);
     })
   }
 }

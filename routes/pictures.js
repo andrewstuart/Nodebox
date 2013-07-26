@@ -1,52 +1,58 @@
 /**
  * POST a picture.
  */
-
 var fs = require('fs')
 , db = require('../database')
 , ID = require('mongodb').ObjectID
 , _ = require('underscore')
 , gm = require('gm')
-, Exif = require('exif').ExifImage;
+, Exif = require('exif').ExifImage
+, mkdirp = require('mkdirp');
 
-var defaultFolder = '/files';
+var defaultFolder = './files';
 
-var moveFile = function(readPath, writePath, options) {
-  options = options || {};
-  var close = typeof options.close === 'function' ? options.close : function() {return true;};
+var pad = function(n, width, z) {
+  z = z || '0';
+  n = n + '';
+  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+}
 
-  var writeStream = fs.createWriteStream(writePath);//.addEventListener("close", close);
-
-  fs.createReadStream(readPath).pipe(writeStream);
+var moveFile = function(readPath, writePath) {
+  fs.createReadStream(readPath).pipe(fs.createWriteStream(writePath));
 };
 
 var receive = function(req, res) {
   //Place to store data temporarily.
-  var dbObject = _.extend({}, req.body);
-
-  var receivedTime = dbObject.receivedTime = new Date();
-
   for (fileName in req.files) {
-    var file = req.files[fileName];
+
+    //Get references to some variables.
+    var dbObject = _.extend({}, req.body);
+    var receivedTime = dbObject.receivedTime = new Date();
+
+    var jobNum = dbObject.jobPhaseNumber || '99';
+    var areaNum = dbObject.areaNum = jobNum.substring(0,2);
+
+    var submittedAt = new Date(dbObject.submittedAt);
+    
+    //Get date folder from the submittedTime
+    var datepartString = submittedAt.getFullYear() + pad(submittedAt.getMonth(), 2);
 
     debugger;
 
-    var originalFileName = dbObject.originalFileName = file.name;
-    var fileFolder = dbObject.fileFolder = defaultFolder;
+    var f = {file: req.files[fileName]};
+      f.folder = dbObject.fileFolder = defaultFolder + '/' + areaNum + '/' + datepartString,
+      f.suffix = f.file.name.split('.').pop(),
+      f.name = submittedAt.toJSON().replace(/:|\./g, '-') + jobNum + '.' + f.suffix,
+      f.path = dbObject.filePath = f.folder + '/' + f.name
+    
 
+    debugger;
 
-    var newFilePath = dbObject.filePath = '.' + fileFolder + '/' + originalFileName;
-
-    moveFile(file.path, newFilePath, {
-      close: function(event) {
-        debugger;
-        console.log("Moved the file!");
-      }
+    mkdirp(f.folder, function(err) {
+      moveFile(f.file.path, f.path);
     });
 
-    debugger;
-
-    new Exif({image: file.path}, function(err, exifData) {
+    new Exif({image: f.file.path}, function(err, exifData) {
 
       dbObject.exif = exifData;
 
@@ -54,9 +60,8 @@ var receive = function(req, res) {
       //Insert the data into the file collection.
       db.collection('files', function(err, fileCollection) {
         if(err) throw err;
-        fileCollection.update({'filePath': newFilePath}, {$set: dbObject}, {upsert: true}, function(err, returnDocument) {
+        fileCollection.update({'filePath': f.path}, {$set: dbObject}, {upsert: true}, function(err, returnDocument) {
           if(err) throw err;
-
           exports.list(req, res);
         });
       });
@@ -77,7 +82,7 @@ exports.list = function(req, res) {
         //debugger;
         if(err) console.log(err);
 
-        res.download('.' + returnDocument.fileFolder + '/' + returnDocument.originalFileName);
+        res.download(returnDocument.filePath);
       });
     } else {
       fileCollection.find().toArray(function(err, data) {
