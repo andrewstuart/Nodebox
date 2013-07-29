@@ -71,49 +71,64 @@ var moveFile = function(readPath, writePath) {
 };
 
 var receivePost = function(req, res) {
-  //Get references to some variables.
-  var dbObject = _.extend({}, req.body);
-  var receivedTime = dbObject.receivedTime = new Date();
+  //Store the body to be written to the form data.
+  var formData = _.extend({}, req.body);
+  formData.fileArray = [];
+  var dbFileArray = [];
 
-  var jobNum = dbObject.jobPhaseNumber || 'None';
-  var areaNum = dbObject.areaNum = intTest.test(jobNum) ? jobNum.substring(0,2) : 'None';
+  var receivedTime = formData.receivedTime = new Date();
+  var jobNum = formData.jobPhaseNumber || 'None';
+  var areaNum = formData.areaNum = intTest.test(jobNum) ? jobNum.substring(0,2) : 'None';
+  var submittedAt = new Date(formData.submittedAt || '');
 
-  var submittedAt = new Date(dbObject.submittedAt || '');
-
-  //Get date folder from the submittedTime
+  //Files will be stored in a location based on their submittedAt time.
   var datepartString = submittedAt.getFullYear() + pad(submittedAt.getMonth(), 2);
-
-  debugger;
-
-  dbObject.fileArray = [];
+  var folder = defaultFolder + '/' + areaNum + '/' + jobNum + '/' + datepartString;
 
   for(fileName in req.files) {
-    debugger;
+    var eachFile = req.files[fileName];
+    //debugger;
 
-    //Get a bunch of info.
-    var f = {};
-    f.folder = dbObject.fileFolder = defaultFolder + '/' + areaNum + '/' + jobNum + '/' + datepartString;
-    f.suffix = fileName.split('.').pop();
+    //Get a bunch of info about the file.
+    var f = {
+      suffix: eachFile.name.split('.').pop(),
+      _id: eachFile._id ? ID(eachFile._id) : ID()
+    };
     f.name = submittedAt.toJSON().replace(/:|\./g, '-') + jobNum + '.' + f.suffix;
-    f.path = dbObject.filePath = f.folder + '/' + f.name;
+    f.path = folder + '/' + f.name;
+
+    formData.fileArray.push({
+      _id: f._id,
+      path: f.path
+    });
+
     //Also get the Exif.
     new Exif({image: req.files[fileName].path}, function(err, exifData) {
       f.exif = exifData;
-      dbObject.fileArray.push(f);
+      
+      dbFileArray.push(f);
 
       //If you have every file taken care of, post the collection and send a response.
-      if(dbObject.fileArray.length === req.files.length) {
+      if(dbFileArray.length === Object.keys(req.files).length) {
+        debugger;
+        
+        //Insert files
         db.collection('files', function(err, coll) {
-          coll.insert(dbObject, function(err, responseObject) {
-            //res.json(responseObject);
-            res.redirect('/files');
+          coll.insert(dbFileArray, function(err, responseObject) {
+          });
+        });
+        //At the same time insert formSubmission. Nonblocking is cool!
+        db.collection('formSubmission', function(err, coll) {
+          coll.insert(formData, function(err, responseObject) {
+            res.json(responseObject);
+            //res.redirect('/files');
           });
         });
       }
     });
-
+    
     //Make a directory if it's not found and move the file there.
-    mkdirp(eachFile.folder, function(err) {
+    mkdirp(folder, function(err) {
       moveFile(eachFile.path, f.path);
     });
   }
