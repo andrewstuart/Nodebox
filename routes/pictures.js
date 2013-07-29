@@ -91,7 +91,7 @@ var receivePost = function(req, res) {
     debugger;
 
     //Get a bunch of info.
-    var f = {file: req.files[fileName]};
+    var f = {};
     f.folder = dbObject.fileFolder = defaultFolder + '/' + areaNum + '/' + jobNum + '/' + datepartString;
     f.suffix = fileName.split('.').pop();
     f.name = submittedAt.toJSON().replace(/:|\./g, '-') + jobNum + '.' + f.suffix;
