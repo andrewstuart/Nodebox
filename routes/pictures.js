@@ -19,9 +19,11 @@ var pad = function(n, width, z) {
 
 var intTest = /^\d+$/g;
 
+/*
 var parseFileRequest = function(req) {
   //Get references to some variables.
   var dbObject = _.extend({}, req.body);
+  dbObject.fileArray = []
   var receivedTime = dbObject.receivedTime = new Date();
 
   var jobNum = dbObject.jobPhaseNumber || 'None';
@@ -46,38 +48,73 @@ var parseFileRequest = function(req) {
     new Exif({image: eachFile.path}, function(err, exifData) {
       f.exif = exifData;
       fileArray.push(f);
+
+      //If you have every file taken care of, post the collection and send a response.
       if(fileArray.length === req.files.length) {
-        return {
-          dbObject: dbObject,
-        f: fileArray
-        }
+        db.collection('files', function(err, coll) {
+          coll.insert(dbObject, function(err, responseObject) {
+            res.redirect('/files');
+          });
+        });
       }
     });
-  }
 
+    mkdirp(eachFile.folder, function(err) {
+      moveFile(eachFile.path, f.path);
+    });
+  }
 }
+*/
 
 var moveFile = function(readPath, writePath) {
   fs.createReadStream(readPath).pipe(fs.createWriteStream(writePath));
 };
 
 var receivePost = function(req, res) {
-  //Place to store data temporarily.
-  var reqDetails = parseFileRequest(req);
-  var dbObject = reqDetails.dbObject;
-  for (eachFile in reqDetails.f) {
+  //Get references to some variables.
+  var dbObject = _.extend({}, req.body);
+  var receivedTime = dbObject.receivedTime = new Date();
 
-    mkdirp(eachFile.folder, function(err) {
-      moveFile(eachFile.path, f.path);
+  var jobNum = dbObject.jobPhaseNumber || 'None';
+  var areaNum = dbObject.areaNum = intTest.test(jobNum) ? jobNum.substring(0,2) : 'None';
+
+  var submittedAt = new Date(dbObject.submittedAt || '');
+
+  //Get date folder from the submittedTime
+  var datepartString = submittedAt.getFullYear() + pad(submittedAt.getMonth(), 2);
+
+  debugger;
+
+  dbObject.fileArray = [];
+
+  for(fileName in req.files) {
+    debugger;
+
+    //Get a bunch of info.
+    var f = {file: req.files[fileName]};
+    f.folder = dbObject.fileFolder = defaultFolder + '/' + areaNum + '/' + jobNum + '/' + datepartString;
+    f.suffix = fileName.split('.').pop();
+    f.name = submittedAt.toJSON().replace(/:|\./g, '-') + jobNum + '.' + f.suffix;
+    f.path = dbObject.filePath = f.folder + '/' + f.name;
+    //Also get the Exif.
+    new Exif({image: req.files[fileName].path}, function(err, exifData) {
+      f.exif = exifData;
+      dbObject.fileArray.push(f);
+
+      //If you have every file taken care of, post the collection and send a response.
+      if(dbObject.fileArray.length === req.files.length) {
+        db.collection('files', function(err, coll) {
+          coll.insert(dbObject, function(err, responseObject) {
+            //res.json(responseObject);
+            res.redirect('/files');
+          });
+        });
+      }
     });
 
-    new Exif({image: eachFile.path}, function(err, exifData) {
-
-      dbObject.exif = exifData;
-
-
-      //TODO: Refactor to use a data api.
-      //Insert the data into the file collection.
+    //Make a directory if it's not found and move the file there.
+    mkdirp(eachFile.folder, function(err) {
+      moveFile(eachFile.path, f.path);
     });
   }
 }
