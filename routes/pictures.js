@@ -20,30 +20,41 @@ var pad = function(n, width, z) {
 var intTest = /^\d+$/g;
 
 var parseFileRequest = function(req) {
-    //Get references to some variables.
-    var dbObject = _.extend({}, req.body);
-    var receivedTime = dbObject.receivedTime = new Date();
+  //Get references to some variables.
+  var dbObject = _.extend({}, req.body);
+  var receivedTime = dbObject.receivedTime = new Date();
 
-    var jobNum = dbObject.jobPhaseNumber || 'None';
-    var areaNum = dbObject.areaNum = intTest.test(jobNum) ? jobNum.substring(0,2) : 'None';
+  var jobNum = dbObject.jobPhaseNumber || 'None';
+  var areaNum = dbObject.areaNum = intTest.test(jobNum) ? jobNum.substring(0,2) : 'None';
 
-    var submittedAt = new Date(dbObject.submittedAt || '');
-    
-    //Get date folder from the submittedTime
-    var datepartString = submittedAt.getFullYear() + pad(submittedAt.getMonth(), 2);
+  var submittedAt = new Date(dbObject.submittedAt || '');
 
-    debugger;
+  //Get date folder from the submittedTime
+  var datepartString = submittedAt.getFullYear() + pad(submittedAt.getMonth(), 2);
 
+  debugger;
+
+  var fileArray = [];
+
+  for(eachFile in req.files) {
+    var fileName = eachFile.name;
     var f = {file: req.files[fileName]};
     f.folder = dbObject.fileFolder = defaultFolder + '/' + areaNum + '/' + jobNum + '/' + datepartString;
     f.suffix = f.file.name.split('.').pop();
     f.name = submittedAt.toJSON().replace(/:|\./g, '-') + jobNum + '.' + f.suffix;
     f.path = dbObject.filePath = f.folder + '/' + f.name;
+    new Exif({image: eachFile.path}, function(err, exifData) {
+      f.exif = exifData;
+      fileArray.push(f);
+      if(fileArray.length === req.files.length) {
+        return {
+          dbObject: dbObject,
+        f: fileArray
+        }
+      }
+    });
+  }
 
-    return {
-      dbObject: dbObject,
-      f: f
-    }
 }
 
 var moveFile = function(readPath, writePath) {
@@ -52,32 +63,21 @@ var moveFile = function(readPath, writePath) {
 
 var receivePost = function(req, res) {
   //Place to store data temporarily.
-  for (fileName in req.files) {
+  var reqDetails = parseFileRequest(req);
+  var dbObject = reqDetails.dbObject;
+  for (eachFile in reqDetails.f) {
 
-    var reqDetails = parseFileRequest(req);
-
-    var f = reqDetails.f;
-    var dbObject = reqDetails.dbObject;
-
-    debugger;
-
-    mkdirp(f.folder, function(err) {
-      moveFile(f.file.path, f.path);
+    mkdirp(eachFile.folder, function(err) {
+      moveFile(eachFile.path, f.path);
     });
 
-    new Exif({image: f.file.path}, function(err, exifData) {
+    new Exif({image: eachFile.path}, function(err, exifData) {
 
       dbObject.exif = exifData;
 
+
       //TODO: Refactor to use a data api.
       //Insert the data into the file collection.
-      db.collection('files', function(err, fileCollection) {
-        if(err) throw err;
-        fileCollection.update({'filePath': f.path}, {$set: dbObject}, {upsert: true}, function(err, returnDocument) {
-          if(err) throw err;
-          exports.list(req, res);
-        });
-      });
     });
   }
 }
