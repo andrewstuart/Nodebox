@@ -9,5 +9,4 @@ block content
   ul
     each file in fileList
       li
-        label(for=_id)= file.label + ": "
-        a(id=file._id.toString(), href='/files/' + file._id.toString())= file.filePath.split('/').pop()
+        a(id=file._id.toString(), href='/files/' + file._id.toString())= file.path.split('/').pop()

@@ -12,6 +12,7 @@ exports.show = function(req, res) {
 
   var callback = function(err, docs) {
     if(err) throw err;
+    res.set("Access-Control-Allow-Origin", "*");
     res.json(docs);
   }
 
@@ -23,14 +24,18 @@ exports.show = function(req, res) {
   //If the collectioName was specified,
   if(collName) {
     //Generate search object.
-    var searchObject = req.query;
-    if(objectId) searchObject._id = ID(objectId);
-    else if(isPost) searchObject._id = ID();
+    var searchObject = req.query || {};
+    if(objectId) {
+      searchObject._id = dbObject._id = ID(objectId);
+    }
+    if(isPost) {
+      dbObject.receivedAt = new Date();
+    }
 
     db.collection(collName, function(err, coll) {
       if(err) throw err;
 
-      if(isPost) coll.update(searchObject, {$set: dbObject}, {upsert: true}, callback);
+      if(isPost) coll.save(dbObject, callback);
       else coll.find(searchObject).toArray(callback);
     });
   }

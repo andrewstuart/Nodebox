@@ -4,7 +4,7 @@
 var fs = require('fs')
 , db = require('../database')
 , ID = require('mongodb').ObjectID
-, _ = require('underscore')
+, _ = require('underscore')._
 , gm = require('gm')
 , Exif = require('exif').ExifImage
 , mkdirp = require('mkdirp');
@@ -19,51 +19,46 @@ var pad = function(n, width, z) {
 
 var intTest = /^\d+$/g;
 
-var parseFileRequest = function(req) {
-  //Get references to some variables.
-  var dbObject = _.extend({}, req.body);
-  dbObject.fileIds = [];
-  var receivedTime = dbObject.receivedTime = new Date();
-
-  var id = dbObject._id = dbObject._id ? ID(dbObject._id) : ID();
-  var jobNum = dbObject.jobPhaseNumber || 'None';
-  var areaNum = dbObject.areaNum = intTest.test(jobNum) ? jobNum.substring(0,2) : 'None';
-
-  var submittedAt = new Date(dbObject.submittedAt || '');
-
-  //Get date folder from the submittedTime
+var parseFileRequest = function(req, callback) {
+  var receivedTime = new Date();
+  var jobNum = req.body.jobPhaseNumber || 'None';
+  var areaNum = intTest.test(jobNum) ? jobNum.substring(0,2) : 'None';
+  var submittedAt = new Date(req.body.submittedAt || '');
   var datepartString = submittedAt.getFullYear() + pad(submittedAt.getMonth(), 2);
-
-  debugger;
-
-  var fileFolder = dbObject.fileFolder = defaultFolder + '/' + areaNum + '/' + jobNum + '/' + datepartString;
+  var fileFolder = defaultFolder + '/' + areaNum + '/' + jobNum + '/' + datepartString;
   var fileArray = [];
 
-  for (fileKey in req.files) {
-    var eachFile = req.files[fileKey];
-    var suffix = eachFile.name.split('.').pop();
-    var fileObject = {
-      _id: ID(),
-      jobNum: jobNum,
-    };
-    fileObject.name = submittedAt.toJSON().replace(/:|\./g, '-') + jobNum + '.' + suffix;
-    fileObject.path = dbObject.filePath = fileFolder + '/' + fileObject.name;
+  debugger;
+  mkdirp(fileFolder, function(err) {
 
-    fileArray.push(fileObject);
-    dbObject.fileIds.push( {
-      _id: fileObject._id,
-      path: fileObject.path
-    });
+    for (fileKey in req.files) {
+      var eachFile = req.files[fileKey];
+      var suffix = eachFile.name.split('.').pop();
+      var myId = ID();
+      var name = submittedAt.toJSON().replace(/:|\./g, '-') + myId + '.' + suffix;
 
-    mkdirp(fileFolder, function(err) {
+      //Add data we care about.
+
+      var fileObject = {
+        _id: myId,
+        jobNum: jobNum,
+        path: fileFolder + '/' + name,
+        submittedAt: submittedAt,
+        receivedTime: receivedTime
+      };
+
+      //Nonblocking and will continue after the function ends.
+      fileArray.push(fileObject);
+      debugger;
       moveFile(eachFile.path, fileObject.path);
-    });
-  }
 
-  return {
-    dbObject: dbObject,
-      fileArray: fileArray
-  }
+      debugger;
+
+      if(fileArray.length == Object.keys(req.files).length) callback(fileArray);
+    }
+  });
+
+  
 }
 
 var moveFile = function(readPath, writePath) {
@@ -71,21 +66,18 @@ var moveFile = function(readPath, writePath) {
 };
 
 var receivePost = function(req, res) {
-  //Place to store data temporarily.
 
-  var reqDetails = parseFileRequest(req);
+  parseFileRequest(req, function(reqFiles) {
 
-  var dbObject = reqDetails.dbObject;
+    debugger;
 
-  debugger;
-
-  //TODO: Refactor to use a data api.
-  //Insert the data into the file collection.
-  db.collection('files', function(err, fileCollection) {
-    if(err) throw err;
-    fileCollection.update({'_id': _id}, {$set: dbObject}, {upsert: true}, function(err, returnDocument) {
+    //Insert the data into the file collection.
+    db.collection('files', function(err, fileCollection) {
       if(err) throw err;
-      exports.list(req, res);
+      fileCollection.insert(reqFiles, function(err, returnDocument) {
+        if(err) throw err;
+        res.json(returnDocument);
+      });
     });
   });
 }
@@ -103,7 +95,7 @@ exports.list = function(req, res) {
         //debugger;
         if(err) console.log(err);
 
-        res.download(returnDocument.filePath);
+        res.download(returnDocument.path);
       });
     } else {
       fileCollection.find().toArray(function(err, data) {
