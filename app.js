@@ -10,7 +10,8 @@ var express = require('express')
 , path = require('path')
 , mongodb = require('mongodb')
 , db = require('./database')
-, data = require('./routes/data');
+, data = require('./routes/data')
+, secure = require('./secure');
 
 //db.open(function() {console.log("Connected!")});
 
@@ -19,6 +20,7 @@ var app = express();
 // all environments
 app.enable('trust proxy');
 app.set('port', process.env.PORT || 3000);
+app.set('securePort', process.env.SECUREPORT || 3001);
 app.set('views', __dirname + '/views');
 app.set('view engine', 'jade');
 app.use(express.favicon());
@@ -46,6 +48,12 @@ app.post('/files', files.receive);
 app.get('/foo', function(req, res) {debugger; console.log(db)});
 app.all('/data/:collectionName?/:objectId?', data.show);
 
+secure(app);
+
+//https.createServer(secureOptions, app).listen(3001);
+
+
 app.listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
 });
+
