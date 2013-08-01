@@ -39,7 +39,6 @@ if ('development' == app.get('env')) {
 app.get('/', routes.index);
 app.get('/files/:requestedId?', files.list);
 app.post('/files', files.receive);
-app.get('/foo', function(req, res) {debugger; console.log(db)});
 app.all('/data/:collectionName?/:objectId?', gatekeeper.guard, data.show);
 
 gatekeeper.run(app);

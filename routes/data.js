@@ -15,7 +15,7 @@ exports.show = function(req, res) {
   
   debugger;
 
-  var callback = function(err, docs) {
+  var sendJson = function(err, docs) {
     if(err) throw err;
     res.set("Access-Control-Allow-Origin", "*");
     res.json(docs);
@@ -26,7 +26,7 @@ exports.show = function(req, res) {
   var collName = req.params.collectionName;
   var objectId = req.params.objectId;
   var searchObject = req.query || {};
-  var dbObject = {}
+  var dbObject = {};
 
   debugger;
   if(isPost) dbObject = req.body;
@@ -42,13 +42,13 @@ exports.show = function(req, res) {
     }
 
     db.collection(collName, function(err, coll) {
-      if(err) throw err;
+      if(err) res.send(error);
 
-      if(isPost) coll.save(dbObject, callback);
-      else coll.find(searchObject).toArray(callback);
+      if(isPost) coll.save(dbObject, sendJson);
+      else coll.find(searchObject).toArray(sendJson);
     });
   }
   else {
-    db.collectionNames(callback);
+    db.collectionNames(sendJson);
   }
 }

@@ -58,7 +58,7 @@ var parseFileRequest = function(req, callback) {
     }
   });
 
-  
+
 }
 
 var moveFile = function(readPath, writePath) {

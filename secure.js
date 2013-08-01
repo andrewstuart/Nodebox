@@ -38,44 +38,47 @@ exports.run = function(app) {
 
 exports.guard = function(req, res, next) {
   if(!req.secure) return next();
-  token = req.query.authToken;
-  if(validation[token]) {
-    req.env = validation[token];
-    delete req.query['authToken'];
-
-    return next();
-  }
-  else res.send(403);
-}
-
-var guardExperimental = function(req, res, next) {
-  debugger;
-
-  var pathArray = req.path.split('/');
-  var routeArray = req.route.path.split('/');
-
-  var token = pathArray.pop();
-
-  debugger;
-
-  for(pathElement in routeArray) {
-    if(routeArray[pathElement].substring(0,1) !== ':') {
-      debugger;
-      //TODO: Don't use shift.
-      pathArray.shift();
-    }
-  }
-
-  debugger;
-
-  if(validation[token]) {
-    debugger;
-    req.pathArray = pathArray;
-    req.env = validation[token];
-    debugger;
-    next();
-  }
   else {
-    res.send(403);
+    token = req.query.authToken;
+    if(validation[token]) {
+      req.env = validation[token];
+      delete req.query['authToken'];
+
+      return next();
+    }
+    else res.send(403);
   }
 }
+/*
+   var guardExperimental = function(req, res, next) {
+   debugger;
+
+   var pathArray = req.path.split('/');
+   var routeArray = req.route.path.split('/');
+
+   var token = pathArray.pop();
+
+   debugger;
+
+   for(pathElement in routeArray) {
+   if(routeArray[pathElement].substring(0,1) !== ':') {
+   debugger;
+//TODO: Don't use shift.
+pathArray.shift();
+}
+}
+
+debugger;
+
+if(validation[token]) {
+debugger;
+req.pathArray = pathArray;
+req.env = validation[token];
+debugger;
+next();
+}
+else {
+res.send(403);
+}
+}
+*/

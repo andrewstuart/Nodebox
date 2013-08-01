@@ -9,18 +9,3 @@ Db.open(function(err) {
 });
 
 module.exports = Db;
-
-module.exports.getMyData = function(collectionName, searchObject, callback) {
-  if(!collectionName) throw "Please at least pass a collection name."
-    searchObject = searchObject || {};
-
-  callback = typeof callback == 'function' ? callback : function() { return true };
-
-  Db.collection(collectionName, function(err, coll) {
-    coll.find(searchObject).toArray(function(err, returnArray) {
-      debugger;
-      callback(returnArray);
-    })
-  })
-}
-
