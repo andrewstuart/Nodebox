@@ -11,7 +11,7 @@ var express = require('express')
 , mongodb = require('mongodb')
 , db = require('./database')
 , data = require('./routes/data')
-, secure = require('./secure');
+, gatekeeper = require('./secure');
 
 //db.open(function() {console.log("Connected!")});
 
@@ -20,7 +20,7 @@ var app = express();
 // all environments
 app.enable('trust proxy');
 app.set('port', process.env.PORT || 3000);
-app.set('securePort', process.env.SECUREPORT || 3001);
+app.set('securePort', process.env.SECUREPORT || 443);
 app.set('views', __dirname + '/views');
 app.set('view engine', 'jade');
 app.use(express.favicon());
@@ -36,19 +36,13 @@ if ('development' == app.get('env')) {
   app.use(express.errorHandler());
 }
 
-//Allow CORS for anybody.
-app.get('*', function(req, res, next) {
-  res.set('Access-Control-Allow-Origin', '*');
-  next();
-});
-
 app.get('/', routes.index);
 app.get('/files/:requestedId?', files.list);
 app.post('/files', files.receive);
 app.get('/foo', function(req, res) {debugger; console.log(db)});
-app.all('/data/:collectionName?/:objectId?', data.show);
+app.all('/data/:collectionName?/:objectId?', gatekeeper.guard, data.show);
 
-secure(app);
+gatekeeper.run(app);
 
 //https.createServer(secureOptions, app).listen(3001);
 

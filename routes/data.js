@@ -8,7 +8,12 @@ var db = require('../database')
 
 exports.show = function(req, res) {
 
+  debugger;
+
   var isPost = req.originalMethod === 'POST';
+  var pathArray = req.pathArray || [];
+  
+  debugger;
 
   var callback = function(err, docs) {
     if(err) throw err;
@@ -17,14 +22,18 @@ exports.show = function(req, res) {
   }
 
   //Reference to my collectionName
+  //TODO: Find out how to ignore static path roots.
   var collName = req.params.collectionName;
   var objectId = req.params.objectId;
-  if(isPost) var dbObject = req.body;
+  var searchObject = req.query || {};
+  var dbObject = {}
+
+  debugger;
+  if(isPost) dbObject = req.body;
 
   //If the collectioName was specified,
   if(collName) {
     //Generate search object.
-    var searchObject = req.query || {};
     if(objectId) {
       searchObject._id = dbObject._id = ID(objectId);
     }
