@@ -23,7 +23,7 @@ var parseFileRequest = function(req, callback) {
   var receivedTime = new Date();
   var jobNum = req.body.jobPhaseNumber || 'None';
   var areaNum = intTest.test(jobNum) ? jobNum.substring(0,2) : 'None';
-  var submittedAt = new Date(req.body.submittedAt || '');
+  var submittedAt = req.body.submittedAt ? new Date(req.body.submittedAt) : new Date();
   var datepartString = submittedAt.getFullYear() + pad(submittedAt.getMonth(), 2);
   var fileFolder = defaultFolder + '/' + areaNum + '/' + jobNum + '/' + datepartString;
   var fileArray = [];
@@ -66,6 +66,7 @@ var moveFile = function(readPath, writePath) {
 };
 
 var receivePost = function(req, res) {
+  debugger;
 
   parseFileRequest(req, function(reqFiles) {
 

@@ -11,7 +11,6 @@ exports.show = function(req, res) {
   debugger;
 
   var isPost = req.originalMethod === 'POST';
-  var pathArray = req.pathArray || [];
   
   debugger;
 

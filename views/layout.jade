@@ -2,14 +2,16 @@ doctype 5
 html
   head
     title= title
+    script(src='/js/knockout.js')
     script(src='http://code.jquery.com/jquery-1.10.2.min.js')
     link(rel='stylesheet', href='/stylesheets/style.css')
     block scripts
   body
-  div
+  div#links.links
     a.largeLink(href="/") Home
     a.largeLink(href="/files") List
     a.largeLink(href="/data") Data
-  block content
+  div#content.content
+    block content
   footer
     block footer
