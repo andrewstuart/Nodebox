@@ -9,6 +9,7 @@ block content
       label.fieldLabel(for=field.name)= field.label
       input(id=field.name, type=field.type, name=field.name, placeholder=field.placeholder, value=field.value)
     br
+    input(type='file', multiple, name='foofile')
     input(type='hidden', name="exif", id="exif")
     input(type='submit') Submit
 

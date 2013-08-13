@@ -21,14 +21,13 @@ var intTest = /^\d+$/g;
 
 var parseFileRequest = function(req, callback) {
   var receivedTime = new Date();
-  var jobNum = req.body.jobPhaseNumber || 'None';
-  var areaNum = intTest.test(jobNum) ? jobNum.substring(0,2) : 'None';
+  var jobPhaseNumber = req.body.jobPhaseNumber || 'None';
+  var areaNum = intTest.test(jobPhaseNumber) ? jobPhaseNumber.substring(0,2) : 'None';
   var submittedAt = req.body.submittedAt ? new Date(req.body.submittedAt) : new Date();
   var datepartString = submittedAt.getFullYear() + pad(submittedAt.getMonth(), 2);
-  var fileFolder = defaultFolder + '/' + areaNum + '/' + jobNum + '/' + datepartString;
+  var fileFolder = defaultFolder + '/' + areaNum + '/' + jobPhaseNumber + '/' + datepartString;
   var fileArray = [];
 
-  debugger;
   mkdirp(fileFolder, function(err) {
 
     for (fileKey in req.files) {
@@ -39,20 +38,16 @@ var parseFileRequest = function(req, callback) {
 
       //Add data we care about.
 
-      var fileObject = {
+      var fileObject = _.extend({}, req.body, {
         _id: myId,
-        jobNum: jobNum,
         path: fileFolder + '/' + name,
-        submittedAt: submittedAt,
         receivedTime: receivedTime
-      };
+      });
 
       //Nonblocking and will continue after the function ends.
       fileArray.push(fileObject);
       debugger;
       moveFile(eachFile.path, fileObject.path);
-
-      debugger;
 
       if(fileArray.length == Object.keys(req.files).length) callback(fileArray);
     }
